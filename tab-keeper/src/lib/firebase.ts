@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, signInAnonymously, updateProfile } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,11 +10,23 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-console.log('🔥 Firebase Config:', firebaseConfig);
-
-const app = initializeApp(firebaseConfig);
-console.log('✅ Firebase App initialized:', app.name);
-
+// Initialize Firebase only if it hasn't been initialized yet
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
-console.log('🔐 Firebase Auth initialized:', auth);
+
+// Helper function to sign in anonymously with a display name
+export async function signInAnonymouslyWithName(displayName: string) {
+  try {
+    const userCredential = await signInAnonymously(auth);
+    const user = userCredential.user;
+    
+    // Set display name
+    await updateProfile(user, { displayName });
+    
+    console.log('✅ Signed in anonymously as:', displayName);
+    return user;
+  } catch (error) {
+    console.error('Error signing in:', error);
+    throw error;
+  }
+}
